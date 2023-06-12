@@ -1,4 +1,3 @@
-
 const express = require("express");
 const app = express();
 app.use(express.json());
@@ -31,7 +30,7 @@ app.listen(3000, ()=>{
 }
 initializeDbAndServer();
 
-convertToCamelcase = (dbObject)=>{
+convertToCamelCase = (dbObject)=>{
     return{
         id : dbObject.id,
         todo : dbObject.todo,
@@ -181,7 +180,7 @@ app.get("/todos/",async (request, response)=>{
     }
     
     data = await db.all(getTodoQuery);
-    const result = data.map((each)=> convertToCamelcase(each));
+    const result = data.map((each)=> convertToCamelCase(each));
     response.send(result);
 });
 
@@ -190,7 +189,7 @@ app.get("/todos/:todoId/",async (request, response)=>{
     const {todoId} = request.params;
     const getTodoQuery = `SELECT * FROM todo WHERE id = "${todoId}";`;
     const todo = await db.get(getTodoQuery);
-    response.send(convertToCamelcase(todo));
+    response.send(convertToCamelCase(todo));
 })
 
 app.get("/agenda/",async (request, response)=>{
@@ -200,7 +199,7 @@ app.get("/agenda/",async (request, response)=>{
     if (isValid(resultDate)){
         const getTodoQuery = `SELECT * FROM todo WHERE due_date=${date};`;
         const todo = await db.get(getTodoQuery);
-        response.send(convertToCamelcase(todo));
+        response.send(convertToCamelCase(todo));
     } else {
         response.status(400);
         response.send("Invalid Due Date");
