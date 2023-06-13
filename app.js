@@ -76,8 +76,7 @@ const statusCheck = (status)=>{
     if (status === "TO DO" || status === "IN PROGRESS" || status ==="DONE"){
         return true
     } else{
-        response.status(400);
-        response.send("Invalid Todo Status");
+        return false
     }
 }
 
@@ -85,8 +84,7 @@ const priorityCheck=(priority)=>{
     if (priority==="HIGH" || priority ==="MEDIUM" || priority==="LOW"){
         return true
     } else{
-        response.status(400);
-        response.send("Invalid Todo Status");
+        return false
     }
 }
 
@@ -94,8 +92,7 @@ const categoryCheck = (category)=>{
     if (category==="WORK" || category ==="HOME"|| category==="LEARNING"){
         return true
     } else{
-        response.status(400);
-        response.send("Invalid Todo Status");
+        return false
     }
 }
 
@@ -107,8 +104,8 @@ app.get("/todos/",async (request, response)=>{
 
     switch (true) {
         case hasStatusAndPriority(request.query):
-            if (statusCheck(status)){
-                if (priorityCheck(priority)){
+            if (statusCheck(`${status}`)===true){
+                if (priorityCheck(`${priority}`)===true){
                     getTodoQuery = `SELECT * FROM todo WHERE todo LIKE "%${search_q}%" 
                     AND status = "${status}" AND priority = "${priority}";`;                    
                 } else{
@@ -121,10 +118,10 @@ app.get("/todos/",async (request, response)=>{
             }
             break;
         case hasCategoryAndStatus(request.query):
-            if (statusCheck(status)){
-                if (categoryCheck(category)){
+            if (statusCheck(`${status}`)===true){
+                if (categoryCheck(`${category}`)===true){
                     getTodoQuery = `SELECT * FROM todo WHERE todo LIKE "%${search_q}%"
-            AND category = "${category}" AND status = "${status}";`;                
+                    AND category = "${category}" AND status = "${status}";`;                
                 }else{
                     response.status(400);
                     response.send("Invalid Todo Category");
@@ -135,8 +132,8 @@ app.get("/todos/",async (request, response)=>{
             } 
             break;
         case hasCategoryAndPriority(request.query):
-            if(categoryCheck(category)){
-                if(priorityCheck(priority)){
+            if(categoryCheck(`${category}`)===true){
+                if(priorityCheck(`${priority}`)===true){
                     getTodoQuery = `SELECT * FROM todo WHERE todo LIKE "%${search_q}%" 
                     AND category = "${category}" AND priority = "${priority}";`;                    
                 } else{
@@ -149,7 +146,7 @@ app.get("/todos/",async (request, response)=>{
             }
             break;
         case hasStatus(request.query):
-            if(statusCheck(status)){
+            if(statusCheck(`${status}`)===true){
                 getTodoQuery = `SELECt * FROM todo WHERE todo LIKE "%${search_q}%"
             AND status = "${status}";`;
             } else{
@@ -158,7 +155,7 @@ app.get("/todos/",async (request, response)=>{
             }
             break;
         case hasPriority(request.query):
-            if(priorityCheck(priority)){
+            if(priorityCheck(`${priority}`)===true){
                 getTodoQuery = `SELECT * FROM todo WHERE todo LIKE "%${search_q}%"
                 AND priority = "${priority}";`;
             } else{
@@ -167,7 +164,7 @@ app.get("/todos/",async (request, response)=>{
             }
             break;
         case hasCategory(request.query):
-            if(categoryCheck(category)){
+            if(categoryCheck(`${category}`)===true){
                 getTodoQuery = `SELECT * FROM todo WHERE todo LIKE "%${search_q}%"
                 AND category = "${category}";`;
             } else{
@@ -190,7 +187,7 @@ app.get("/todos/:todoId/",async (request, response)=>{
     const getTodoQuery = `SELECT * FROM todo WHERE id = "${todoId}";`;
     const todo = await db.get(getTodoQuery);
     response.send(convertToCamelCase(todo));
-})
+});
 
 app.get("/agenda/",async (request, response)=>{
     const date = request.query;
@@ -204,7 +201,7 @@ app.get("/agenda/",async (request, response)=>{
         response.status(400);
         response.send("Invalid Due Date");
     }
-})
+});
 
 app.post("/todos/",async (request, response)=>{
     const {id, todo, priority, status, category, dueDate} = request.body;
@@ -234,7 +231,7 @@ app.post("/todos/",async (request, response)=>{
         response.status(400);
         response.send("Invalid Todo Priority");
     }
-})
+});
 
 app.put("/todos/:todoId/", async (request, response)=>{
     const {todoId} = request.params;
@@ -242,16 +239,29 @@ app.put("/todos/:todoId/", async (request, response)=>{
     let updateColumn = "";
     switch (true){
         case requestBody.status !== undefined:
-            statusCheck(requestBody.status);
-            updateColumn = "Status";
+            if (statusCheck(requestBody.status)){
+                updateColumn = "Status";
+            } else{
+                response.status(400);
+                response.send("Invalid Todo Status");
+            }
             break;
         case requestBody.priority !== undefined:
-            priorityCheck(requestBody.priority);
-            updateColumn = "Priority";
+            if (priorityCheck(requestBody.priority)){
+                updateColumn = "Priority";
+            } else{
+                response.status(400);
+                response.send("Invalid Todo Priority");
+            }
+            
             break;
         case requestBody.category !== undefined:
-            categoryCheck(requestBody.category);
-            updateColumn = "Category";
+            if(categoryCheck(requestBody.category)){
+                updateColumn = "Category";
+            } else{
+                response.status(400);
+                response.send("Invalid Todo Category");
+            }
             break;
         case requestBody.todo !== undefined:
             updateColumn = "Todo";
@@ -271,13 +281,13 @@ app.put("/todos/:todoId/", async (request, response)=>{
     await db.run(updateTodoQuery);
     response.send(`${updateColumn} Updated`);
     
-})
+});
 
 app.delete("/todos/:todoId/",async (request, response)=>{
     const {todoId} = request.params;
-    const deleteTodoQuery = `DELETE FROM todo WHERE id = ${todoId};`;
+    const deleteTodoQuery = `DELETE * FROM todo WHERE id = ${todoId};`;
     await db.run(deleteTodoQuery);
     response.send("Todo Deleted");
-})
+});
 
 module.exports = app;
