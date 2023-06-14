@@ -190,16 +190,23 @@ app.get("/todos/:todoId/",async (request, response)=>{
 });
 
 app.get("/agenda/",async (request, response)=>{
-    const date = request.query;
-    var resultDate = format(new Date(date.getFullYear(), date.getMonth(), date.getDate()), 'yyyy/MM/dd');
+    const {date} = request.query;
     
-    if (isValid(resultDate)){
-        const getTodoQuery = `SELECT * FROM todo WHERE due_date=${date};`;
-        const todo = await db.get(getTodoQuery);
-        response.send(convertToCamelCase(todo));
-    } else {
+    if (date === undefined){
         response.status(400);
         response.send("Invalid Due Date");
+    } else {
+        const isDateValid = isValid(new Date(date));
+        if (isDateValid){
+            const formattedDate = format(new Date(date), "yyyy-MM-dd");
+            const getQuery = `SELECT id, todo, priority, status, category, due_date as dueDate
+            FROM todo WHERE due_date = "${formattedDate}";`;
+            const todos =await db.all(getQuery);
+            response.send(todos);
+        } else{
+            response.status(400);
+            response.send("Invalid Due Date");
+        }
     }
 });
 
